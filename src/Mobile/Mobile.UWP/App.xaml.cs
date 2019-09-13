@@ -1,9 +1,12 @@
-﻿using System;
+﻿
+
+using System;
 using Windows.ApplicationModel;
 using Windows.ApplicationModel.Activation;
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
 using Windows.UI.Xaml.Navigation;
+using ReactiveUI;
 
 namespace Mobile.UWP
 {
@@ -12,12 +15,15 @@ namespace Mobile.UWP
     /// </summary>
     sealed partial class App : Application
     {
+        private readonly AutoSuspendHelper _autoSuspendHelper;
         /// <summary>
         /// Initializes the singleton application object.  This is the first line of authored code
         /// executed, and as such is the logical equivalent of main() or WinMain().
         /// </summary>
         public App()
         {
+            _autoSuspendHelper = new AutoSuspendHelper(this);
+
             InitializeComponent();
             Suspending += OnSuspending;
         }
@@ -29,6 +35,8 @@ namespace Mobile.UWP
         /// <param name="e">Details about the launch request and process.</param>
         protected override void OnLaunched(LaunchActivatedEventArgs e)
         {
+            _autoSuspendHelper.OnLaunched(e);
+
             // Do not repeat app initialization when the Window already has content,
             // just ensure that the window is active
             if (!(Window.Current.Content is Frame rootFrame))
