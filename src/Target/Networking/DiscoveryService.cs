@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Linq;
 using System.Net.NetworkInformation;
+using System.Net.Sockets;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Hosting.Server;
@@ -8,7 +9,6 @@ using Microsoft.AspNetCore.Hosting.Server.Features;
 using Microsoft.Extensions.Hosting;
 using Rssdp;
 using Shared;
-using Shared.Extensions;
 
 namespace Target.Networking
 {
@@ -24,7 +24,16 @@ namespace Target.Networking
             {
                 var address = NetworkInterface
                     .GetAllNetworkInterfaces()
-                    .GetLocalAddress();
+                    .OrderByDescending(x => x.Speed)
+                    .FirstOrDefault(x =>
+                        x.NetworkInterfaceType != NetworkInterfaceType.Loopback &&
+                        x.OperationalStatus == OperationalStatus.Up
+                    )
+                    ?.GetIPProperties()
+                    ?.UnicastAddresses
+                    .Where(x => x.Address.AddressFamily == AddressFamily.InterNetwork)
+                    .Select(x => x.Address)
+                    .FirstOrDefault();
 
                 var endpoint = server
                     ?.Features
