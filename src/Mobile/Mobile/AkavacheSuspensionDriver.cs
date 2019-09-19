@@ -11,7 +11,7 @@ namespace Mobile
     public class AkavacheSuspensionDriver<TAppState> : ISuspensionDriver where TAppState : class
     {
         private const string AppStateKey = "appState";
-  
+        
         public AkavacheSuspensionDriver() => BlobCache.ApplicationName = "Control";
 
         public IObservable<Unit> InvalidateState() => BlobCache.UserAccount.Invalidate(AppStateKey);

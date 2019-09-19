@@ -12,7 +12,7 @@
     <DefaultLanguage>en-US</DefaultLanguage>
     <TargetPlatformIdentifier>UAP</TargetPlatformIdentifier>
     <TargetPlatformVersion>10.0.18362.0</TargetPlatformVersion>
-    <TargetPlatformMinVersion>10.0.16299.0</TargetPlatformMinVersion>
+    <TargetPlatformMinVersion>10.0.18362.0</TargetPlatformMinVersion>
     <MinimumVisualStudioVersion>14</MinimumVisualStudioVersion>
     <EnableDotNetNativeCompatibleProfile>true</EnableDotNetNativeCompatibleProfile>
     <FileAlignment>512</FileAlignment>
@@ -154,7 +154,7 @@
       <Name>Shared</Name>
     </ProjectReference>
     <ProjectReference Include="..\Mobile\Mobile.csproj">
-      <Project>{5015380E-1199-4726-81C2-D62CC1B4CF95}</Project>
+      <Project>{397f57d4-eaa8-4277-b429-4396a1b4e104}</Project>
       <Name>Mobile</Name>
     </ProjectReference>
   </ItemGroup>

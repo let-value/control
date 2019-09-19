@@ -3,10 +3,12 @@ using System.Linq;
 using System.Reactive;
 using System.Reactive.Linq;
 using Akavache;
-using Newtonsoft.Json;
+using Mobile.Interface.ControlPage;
+using Mobile.Interface.SearchPage;
 using ReactiveUI;
 using ReactiveUI.XamForms;
 using Splat;
+using Xamarin.Essentials;
 using Xamarin.Forms;
 
 namespace Mobile
@@ -15,26 +17,30 @@ namespace Mobile
     {
         public App()
         {
-            InitializeComponent();
-            
-            RxApp.SuspensionHost.CreateNewAppState = () => new Controller();
-            RxApp.SuspensionHost.SetupDefaultSuspendResume(new AkavacheSuspensionDriver<Controller>());
+            if(string.IsNullOrWhiteSpace(Preferences.Get("deviceId", string.Empty)))
+                Preferences.Set("deviceId", Guid.NewGuid().ToString());
 
-            RxApp.SuspensionHost.ObserveAppState<Controller>().Subscribe(state =>
+            RxApp.SuspensionHost.CreateNewAppState = () => new State();
+            RxApp.SuspensionHost.SetupDefaultSuspendResume(new AkavacheSuspensionDriver<State>());
+
+            RxApp.SuspensionHost.ObserveAppState<State>().Subscribe(state =>
             {
-                Locator.CurrentMutable.RegisterConstant(state, typeof(IScreen));
-                Locator.CurrentMutable.Register(() => new ControlPageView(), typeof(IViewFor<ControlPageViewModel>));
-
-                if(!(state.Router.GetCurrentViewModel() is ControlPageViewModel))
-                    state.Router.Navigate.Execute(new ControlPageViewModel(state));
-
                 Device.BeginInvokeOnMainThread(() =>
                 {
+                    Locator.CurrentMutable.RegisterConstant<IScreen>(state);
+                    Locator.CurrentMutable.Register<IViewFor<ControlPageViewModel>>(() => new ControlPageView());
+                    Locator.CurrentMutable.Register<IViewFor<SearchPageViewModel>>(() => new SearchPageView());
+
+                    if (state.Router.GetCurrentViewModel() == null)
+                        state.Router.Navigate.Execute(new ControlPageViewModel());
+
                     MainPage = new RoutedViewHost();
                 });
             });
 
-            MainPage = new MainPage();
+            MainPage = new AppPlaceholder();
+
+            InitializeComponent();
         }
 
         protected override void OnStart()

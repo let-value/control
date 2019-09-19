@@ -1,11 +1,11 @@
-﻿using System;
-using System.IO;
+﻿using System.Threading;
 using System.Threading.Tasks;
-using Microsoft.Extensions.Configuration;
+using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Hosting.Server.Features;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
-using Target.Interface;
+using Target.Extensions;
 using Target.Networking;
 
 namespace Target
@@ -14,16 +14,26 @@ namespace Target
     {
         static async Task Main(string[] args)
         {
-            var host = new HostBuilder()
-                .ConfigureAppConfiguration(CreateConfiguration(args))
-                .ConfigureServices(ConfigureServices)
+            var host = new WebHostBuilder()
+                .ConfigureAppConfiguration(Startup.CreateConfiguration(args))
+                .UseStartup<Startup>()
+                .UseKestrel((context, options) => options.Configure(context.Configuration.GetSection("Kestrel")))
                 .Build();
 
+            var lifetime = host.Services.GetService<IHostApplicationLifetime>();
             var logger = host.Services.GetService<ILogger<Program>>();
 
-            logger.LogTrace("Start app host");
+            await host.StartAsync();
+            await host.Services.GetHostedService<DiscoveryService>().StartAsync(CancellationToken.None);
 
-            await host.RunAsync();
+            foreach (var address in host
+                .ServerFeatures
+                .Get<IServerAddressesFeature>()
+                .Addresses
+            )
+                logger.LogInformation(address);
+
+            await host.WaitForShutdownAsync(lifetime.ApplicationStopping);
 
             //var avalonia = AppBuilder
             //    .Configure(new Application())
@@ -33,26 +43,6 @@ namespace Target
             //    .Start<MainWindow>();
         }
 
-        private static Action<HostBuilderContext, IConfigurationBuilder> CreateConfiguration(
-            string[] args
-        ) =>
-            (context, config) => config
-                .SetBasePath(Directory.GetCurrentDirectory())
-                .AddJsonFile("settings.json", true, false)
-                .AddJsonFile($"settings.{context.HostingEnvironment.EnvironmentName}.json", true, false)
-                .AddEnvironmentVariables()
-                .AddCommandLine(args);
-
-        private static void ConfigureServices(HostBuilderContext context, IServiceCollection services)
-        {
-            services.AddLogging(builder => builder
-                .AddConfiguration(context.Configuration.GetSection("Logging"))
-                .AddDebug()
-                .AddConsole()
-            );
-
-            services.AddHostedService<NetworkingService>();
-            services.AddSingleton<MainWindowModel>();
-        }
+        
     }
 }

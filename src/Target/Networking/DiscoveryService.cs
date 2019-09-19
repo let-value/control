@@ -4,21 +4,29 @@ using System.Net.NetworkInformation;
 using System.Net.Sockets;
 using System.Threading;
 using System.Threading.Tasks;
+using Akavache.HostState;
 using Microsoft.AspNetCore.Hosting.Server;
 using Microsoft.AspNetCore.Hosting.Server.Features;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Hosting;
 using Rssdp;
-using Shared;
+using Target.Models;
 
 namespace Target.Networking
 {
+    public class SsdpDetailsController : Controller
+    {
+        [Route("ssdpDetails.xml")]
+        public IActionResult GetDetails() => Content(DiscoveryService.DeviceDefinition.Value.ToDescriptionDocument(), "application/xml");
+    }
+
     public class DiscoveryService : IHostedService
     {
         int _executionAttempt;
         readonly SsdpDevicePublisher _publisher = new SsdpDevicePublisher();
-        public readonly Lazy<SsdpRootDevice> DeviceDefinition;
-
-        public DiscoveryService(IServer server)
+        public static Lazy<SsdpRootDevice> DeviceDefinition;
+        
+        public DiscoveryService(IServer server, IState<State> state)
         {
             DeviceDefinition = new Lazy<SsdpRootDevice>(() =>
             {
@@ -35,23 +43,26 @@ namespace Target.Networking
                     .Select(x => x.Address)
                     .FirstOrDefault();
 
-                var endpoint = server
+                var endpoints = server
                     ?.Features
                     .Get<IServerAddressesFeature>()
                     .Addresses
                     .Select(x => new Uri(x))
-                    .FirstOrDefault() ?? new Uri("http://google.com");
-                
+                    .ToArray();
+
+                var endpoint = endpoints?.FirstOrDefault(x => x.Scheme == "http") ?? new Uri("http://google.com");
+
                 return new SsdpRootDevice
                 {
                     CacheLifetime = TimeSpan.FromMinutes(30),
-                    Location = new Uri($"{endpoint.Scheme}://{address}:{endpoint.Port}"),
+                    Location = new Uri($"{endpoint.Scheme}://{address}:{endpoint.Port}/ssdpDetails.xml"),
                     DeviceTypeNamespace = "control-target",
-                    DeviceType = "target",
-                    FriendlyName = "Control target",
+                    DeviceType = "ControlTarget",
+                    DeviceVersion = 1,
+                    FriendlyName = Environment.MachineName,
                     Manufacturer = "let.value",
                     ModelName = "target",
-                    Uuid = Resources.From("Shared.Strings").GetString("discoveryUUID")
+                    Uuid = state.Value.Id
                 };
             });
         }

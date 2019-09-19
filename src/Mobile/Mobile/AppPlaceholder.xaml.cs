@@ -10,9 +10,9 @@ using Xamarin.Forms.Xaml;
 namespace Mobile
 {
     [XamlCompilation(XamlCompilationOptions.Compile)]
-    public partial class MainPage : ContentPage
+    public partial class AppPlaceholder : ContentPage
     {
-        public MainPage()
+        public AppPlaceholder()
         {
             InitializeComponent();
         }
