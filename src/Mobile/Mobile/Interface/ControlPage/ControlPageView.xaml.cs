@@ -30,13 +30,14 @@ namespace Mobile.Interface.ControlPage
                 ViewModel.HostScreen = Locator.Current.GetService<IScreen>();
                 State = RxApp.SuspensionHost.GetAppState<State>();
 
-                this.OneWayBind(ViewModel, x => x.Connected.Name, x => x.Title)
+                this.OneWayBind(ViewModel, x => x.Device, x => x.Title)
                     .DisposeWith(disposables);
                 
                 this.BindCommand(ViewModel, x => x.GoToSearch, x => x.GoToSearch)
                     .DisposeWith(disposables);
 
-                var connected = ViewModel.WhenAnyValue(x => x.Connected).Select(x => x != null);
+                var connected = ViewModel
+                    .WhenAnyValue(x => x.Connected);
 
                 ViewModel.Sleep = ReactiveCommand
                     .CreateFromTask(OnSleep, connected)
@@ -56,23 +57,27 @@ namespace Mobile.Interface.ControlPage
                 this.BindCommand(ViewModel, x => x.Reboot, x => x.Reboot)
                     .DisposeWith(disposables);
 
+#pragma warning disable 4014
                 ControlAsync(disposables);
+#pragma warning restore 4014
             });
         }
 
         private async Task OnSleep()
         {
-            
+            await Connection.SendAsync("sleep");
         }
 
         private async Task OnShutdown()
         {
-            
+            if(await DisplayAlert ("Warning", "Are you sure you want to shutdown the computer?", "Yes", "No"))
+                await Connection.SendAsync("shutdown");
         }
 
         private async Task OnReboot()
         {
-            
+            if(await DisplayAlert ("Warning", "Are you sure you want to reboot the computer?", "Yes", "No"))
+                await Connection.SendAsync("reboot");
         }
 
         private async Task ControlAsync(CompositeDisposable disposables)
@@ -82,7 +87,14 @@ namespace Mobile.Interface.ControlPage
             if (!await TryConnectAsync(disposables))
             {
                 await SearchAsync();
-                await TryConnectAsync(disposables);
+                if (!await TryConnectAsync(disposables))
+                {
+                    Device.BeginInvokeOnMainThread(() =>
+                    {
+                        ViewModel.Connected = false;
+                        ViewModel.Device = "Not found";
+                    });
+                }
             }
         }
 
@@ -90,12 +102,16 @@ namespace Mobile.Interface.ControlPage
         
         private void OnConnected()
         {
-            Device.BeginInvokeOnMainThread(() => { ViewModel.Connected = State.PreviousDevice; });
+            Device.BeginInvokeOnMainThread(() =>
+            {
+                ViewModel.Connected = true;
+                ViewModel.Device = State.PreviousDevice.Name;
+            });
         }
 
         private void OnDisconnected()
         {
-            Device.BeginInvokeOnMainThread(() => { ViewModel.Connected = null; });
+            Device.BeginInvokeOnMainThread(() => { ViewModel.Connected = false; ViewModel.Device = "Disconnected"; });
         }
         
         private async Task<bool> TryConnectAsync(CompositeDisposable disposables)
@@ -105,6 +121,8 @@ namespace Mobile.Interface.ControlPage
 
             try
             {
+                Device.BeginInvokeOnMainThread(() => { ViewModel.Device = "Connecting"; });
+
                 if (Connection != null)
                     await Connection.DisposeAsync();
 
@@ -112,18 +130,22 @@ namespace Mobile.Interface.ControlPage
                     .WithUrl(new UriBuilder(State?.PreviousDevice?.Location) {Path = "/signals"}.Uri.ToString())
                     .Build();
 
+#pragma warning disable 1998
                 Connection.Closed += async ex => OnDisconnected();
+#pragma warning restore 1998
 
                 Connection.On("connected", OnConnected)
                     .DisposeWith(disposables);
 
                 await Connection.StartAsync();
 
+                Device.BeginInvokeOnMainThread(() => { ViewModel.Device = "Waiting for permission"; });
+
                 await Connection.SendAsync("info", State.Id, DeviceInfo.Name);
 
                 return true;
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 return false;
             }
@@ -133,6 +155,8 @@ namespace Mobile.Interface.ControlPage
 
         private Task SearchAsync()
         {
+            Device.BeginInvokeOnMainThread(() => { ViewModel.Device = "Searching"; });
+
             var tcs = new TaskCompletionSource<bool>();
             Task.Run(async () =>
             {

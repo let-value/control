@@ -19,7 +19,7 @@ namespace Akavache.HostState
             _settings = settings;
         }
 
-        public string GetKeyName<TState>() => _keyMemo.GetOrAdd(typeof(TState), type => type.FullName);
+        private string GetKeyName<TState>() => _keyMemo.GetOrAdd(typeof(TState), type => type.FullName);
 
         public IObservable<Unit> InvalidateState<TState>() =>
             BlobCache

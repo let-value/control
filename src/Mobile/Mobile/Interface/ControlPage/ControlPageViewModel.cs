@@ -1,8 +1,6 @@
-﻿using System;
-using System.Runtime.Serialization;
+﻿using System.Runtime.Serialization;
 using System.Windows.Input;
 using Mobile.Interface.SearchPage;
-using Mobile.Models;
 using ReactiveUI;
 
 namespace Mobile.Interface.ControlPage
@@ -18,8 +16,15 @@ namespace Mobile.Interface.ControlPage
             () => HostScreen.Router.Navigate.Execute(new SearchPageViewModel())
         );
 
-        private TargetDevice _connected;
-        public TargetDevice Connected
+        private string _device;
+        public string Device
+        {
+            get => _device;
+            set => this.RaiseAndSetIfChanged(ref _device, value);
+        }
+
+        private bool _connected;
+        public bool Connected
         {
             get => _connected;
             set => this.RaiseAndSetIfChanged(ref _connected, value);

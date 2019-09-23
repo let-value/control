@@ -14,13 +14,15 @@ namespace Target
 {
     public class Startup
     {
-        public IConfiguration Configuration { get; set; }
+        private IWebHostEnvironment Env { get; set; }
+        private IConfiguration Configuration { get; }
 
-        public Startup(IConfiguration configuration)
+        public Startup(IWebHostEnvironment env, IConfiguration configuration)
         {
+            Env = env;
             Configuration = configuration;
         }
-
+       
         public static Action<WebHostBuilderContext, IConfigurationBuilder> CreateConfiguration(
             string[] args
         ) =>
@@ -37,6 +39,7 @@ namespace Target
                 .AddConfiguration(Configuration.GetSection("Logging"))
                 .AddDebug()
                 .AddConsole()
+                .AddEventLog()
             );
 
             services.AddMvcCore()
@@ -51,9 +54,9 @@ namespace Target
             services.AddSignalR();
         }
 
-        public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
+        public void Configure(IApplicationBuilder app)
         {
-            if (env.IsDevelopment())
+            if (Env.IsDevelopment())
             {
                 app.UseDeveloperExceptionPage();
             }

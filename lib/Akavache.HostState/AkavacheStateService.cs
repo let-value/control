@@ -13,7 +13,7 @@ namespace Akavache.HostState
         private readonly StateWrapper<TState> _stateWrapper;
         private readonly ILogger<AkavacheStateService<TState>> _logger;
 
-        public AkavacheStateService(AkavacheStateDriver driver, IState<TState> state, ILogger<AkavacheStateService<TState>> logger)
+        public AkavacheStateService(IState<TState> state, ILogger<AkavacheStateService<TState>> logger)
         {
             _stateWrapper = state as StateWrapper<TState>;
             _logger = logger;

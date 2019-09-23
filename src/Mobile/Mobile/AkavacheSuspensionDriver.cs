@@ -27,6 +27,7 @@ namespace Mobile
             Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(state, JsonSettings))
             );
 
+        // ReSharper disable once StaticMemberInGenericType
         private static readonly JsonSerializerSettings JsonSettings = new JsonSerializerSettings
         {
             TypeNameHandling = TypeNameHandling.All

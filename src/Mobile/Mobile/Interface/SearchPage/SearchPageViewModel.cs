@@ -1,12 +1,7 @@
-﻿using System;
-using System.Linq;
-using System.Reactive;
+﻿using System.Reactive;
 using System.Runtime.Serialization;
-using System.Threading.Tasks;
-using DynamicData;
 using DynamicData.Binding;
 using Mobile.Models;
-using Mobile.Networking;
 using ReactiveUI;
 using Rssdp;
 
@@ -21,7 +16,7 @@ namespace Mobile.Interface.SearchPage
 
         public ReactiveCommand<Unit, DiscoveredSsdpDevice[]> RefreshCommand;
 
-        private TargetDevice _selectedDevice = null;
+        private TargetDevice _selectedDevice;
         public TargetDevice SelectedDevice
         {
             get => _selectedDevice;

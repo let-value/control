@@ -2,9 +2,6 @@
 using System.Runtime.Serialization;
 using Mobile.Models;
 using ReactiveUI;
-using ReactiveUI.XamForms;
-using Splat;
-using Xamarin.Forms;
 
 namespace Mobile
 {
@@ -24,6 +21,6 @@ namespace Mobile
         }
 
         [DataMember]
-        public TargetDevice PreviousDevice { get; set; } = null;
+        public TargetDevice PreviousDevice { get; set; }
     }
 }

@@ -5,9 +5,9 @@ using System.Threading.Tasks;
 
 namespace Akavache.HostState
 {
-    public interface IState<TState>
+    public interface IState<out TState>
     {
-        TState Value { get; set; }
+        TState Value { get; }
         Task InvalidateAsync(CancellationToken cancellationToken = default);
         Task LoadAsync(CancellationToken cancellationToken = default);
         Task SaveAsync(CancellationToken cancellationToken = default);

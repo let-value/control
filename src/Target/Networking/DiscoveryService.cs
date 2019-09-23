@@ -1,5 +1,7 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
+using System.Net;
 using System.Net.NetworkInformation;
 using System.Net.Sockets;
 using System.Threading;
@@ -9,8 +11,11 @@ using Microsoft.AspNetCore.Hosting.Server;
 using Microsoft.AspNetCore.Hosting.Server.Features;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 using Rssdp;
+using Rssdp.Infrastructure;
 using Target.Models;
+using IApplicationLifetime = Avalonia.Controls.ApplicationLifetimes.IApplicationLifetime;
 
 namespace Target.Networking
 {
@@ -22,12 +27,19 @@ namespace Target.Networking
 
     public class DiscoveryService : IHostedService
     {
-        int _executionAttempt;
-        readonly SsdpDevicePublisher _publisher = new SsdpDevicePublisher();
+        private ILogger<DiscoveryService> _logger;
+
+        SsdpDevicePublisher[] _publishers;
         public static Lazy<SsdpRootDevice> DeviceDefinition;
+
+        private readonly IHostApplicationLifetime _lifetime;
+        private CancellationTokenRegistration _startCallback;
         
-        public DiscoveryService(IServer server, IState<State> state)
+        public DiscoveryService(ILogger<DiscoveryService> logger, IServer server, IState<State> state, IHostApplicationLifetime lifetime)
         {
+            _logger = logger;
+            _lifetime = lifetime;
+
             DeviceDefinition = new Lazy<SsdpRootDevice>(() =>
             {
                 var address = NetworkInterface
@@ -69,17 +81,57 @@ namespace Target.Networking
 
         public Task StartAsync(CancellationToken cancellationToken)
         {
-            if (_executionAttempt++ == 0)
-                return Task.CompletedTask;
+            _publishers = NetworkInterface
+                .GetAllNetworkInterfaces()
+                .Select(x => x.GetIPProperties())
+                .Select(@interface =>
+                    @interface.UnicastAddresses
+                        .Where(address => (address.Address.AddressFamily == AddressFamily.InterNetwork ||
+                                           address.Address.AddressFamily == AddressFamily.InterNetworkV6) &&
+                                          !IPAddress.IsLoopback(address.Address)
+                        )
+                        .Select(address => address.Address))
+                .Where(x => x.Any())
+                .Aggregate(new List<IPAddress>(), (x, y) => x.Concat(y).ToList())
+                .Select(address =>
+                {
+                    try
+                    {
+                        var locator = new SsdpDevicePublisher(
+                            new SsdpCommunicationsServer(new SocketFactory(address.ToString())));
+                        return locator;
+                    }
+                    catch (Exception)
+                    {
+                        return null;
+                    }
+                })
+                .Where(x => x != null)
+                .ToArray();
 
-            _publisher.AddDevice(DeviceDefinition.Value);
+            _startCallback = _lifetime.ApplicationStarted.Register(AddDevices);
+
             return Task.CompletedTask;
+        }
+
+        private void AddDevices()
+        {
+            foreach (var publisher in _publishers)
+                publisher.AddDevice(DeviceDefinition.Value);
+
+            _startCallback.Dispose();
+
+            _logger.LogInformation($"Discovery service started at {DeviceDefinition.Value.Location}");
         }
 
         public Task StopAsync(CancellationToken cancellationToken)
         {
-            _publisher?.RemoveDevice(DeviceDefinition.Value);
-            _publisher?.Dispose();
+            foreach (var publisher in _publishers)
+            {
+                publisher?.RemoveDevice(DeviceDefinition.Value);
+                publisher?.Dispose();
+            }
+            
             return Task.CompletedTask;
         }
     }

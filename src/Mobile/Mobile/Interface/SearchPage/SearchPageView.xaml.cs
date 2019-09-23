@@ -25,7 +25,7 @@ namespace Mobile.Interface.SearchPage
         {
             InitializeComponent();
 
-            this.WhenActivated(async disposables =>
+            this.WhenActivated(disposables =>
             {
                 ViewModel.HostScreen = Locator.Current.GetService<IScreen>();
                 State = RxApp.SuspensionHost.GetAppState<State>();

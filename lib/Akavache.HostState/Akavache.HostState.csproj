@@ -7,7 +7,7 @@
 
   <ItemGroup>
     <PackageReference Include="akavache" Version="6.8.1" />
-    <PackageReference Include="Microsoft.Extensions.Hosting" Version="2.2.0" />
+    <PackageReference Include="Microsoft.Extensions.Hosting" Version="5.0.0-alpha1.19470.3" />
   </ItemGroup>
 
 </Project>
