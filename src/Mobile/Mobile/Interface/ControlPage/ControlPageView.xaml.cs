@@ -160,34 +160,34 @@ namespace Mobile.Interface.ControlPage
             var tcs = new TaskCompletionSource<bool>();
             Task.Run(async () =>
             {
-                using var discoveryService = new DiscoveryService();
-
-                using var observer = new AnonymousObserver<DeviceAvailableEventArgs>(async e =>
+                using (var discoveryService = new DiscoveryService())
+                using(var observer = new AnonymousObserver<DeviceAvailableEventArgs>(async e =>
                 {
                     State.PreviousDevice = await TargetDevice.FromDiscoveredDeviceAsync(e.DiscoveredDevice);
                     tcs.SetResult(true);
-                });
+                }))
+                {
+                    var pipeline = Observable
+                        .FromEventPattern<DeviceAvailableEventArgs>(
+                            handler => discoveryService.OnDevice += handler,
+                            handler => discoveryService.OnDevice -= handler
+                        )
+                        .Select(x => x.EventArgs);
 
-                var pipeline = Observable
-                    .FromEventPattern<DeviceAvailableEventArgs>(
-                        handler => discoveryService.OnDevice += handler,
-                        handler => discoveryService.OnDevice -= handler
-                    )
-                    .Select(x => x.EventArgs);
+                    if (State.PreviousDevice == null)
+                        pipeline = pipeline
+                            .Take(1);
 
-                if (State.PreviousDevice == null)
-                    pipeline = pipeline
-                        .Take(1);
+                    if (State?.PreviousDevice?.Usn != null)
+                        pipeline = pipeline
+                            .Where(x => x.DiscoveredDevice.Usn == State.PreviousDevice.Usn)
+                            .Take(1);
 
-                if (State?.PreviousDevice?.Usn != null)
-                    pipeline = pipeline
-                        .Where(x => x.DiscoveredDevice.Usn == State.PreviousDevice.Usn)
-                        .Take(1);
+                    pipeline.Subscribe(observer);
 
-                pipeline.Subscribe(observer);
-
-                await discoveryService.SearchAsync();
-                tcs.SetResult(true);
+                    await discoveryService.SearchAsync();
+                    tcs.SetResult(true);
+                }
             });
 
             return tcs.Task;

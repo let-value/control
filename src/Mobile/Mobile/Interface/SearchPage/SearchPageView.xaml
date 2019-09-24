@@ -6,14 +6,15 @@
              xmlns:xamForms="clr-namespace:ReactiveUI.XamForms;assembly=ReactiveUI.XamForms"
              xmlns:searchPage="clr-namespace:Mobile.Interface.SearchPage;assembly=Mobile"
              mc:Ignorable="d"
-             x:Class="Mobile.Interface.SearchPage.SearchPageView">
+             x:Class="Mobile.Interface.SearchPage.SearchPageView"
+             Title="Devices">
     <ContentPage.ToolbarItems>
-        <ToolbarItem x:Name="Refresh" Order="Primary" Text="Refresh" Priority="0" />
+        <ToolbarItem x:Name="Refresh" Order="Primary" Icon="refresh.png" Priority="0" />
     </ContentPage.ToolbarItems>
     <ListView x:Name="DevicesList">
         <ListView.ItemTemplate>
             <DataTemplate>
-                <TextCell Text="{Binding Name}" Detail="{Binding Location.Host}" />
+                <TextCell Text="{Binding Name}" Detail="{Binding Location.Authority}" />
             </DataTemplate>
         </ListView.ItemTemplate>
     </ListView>

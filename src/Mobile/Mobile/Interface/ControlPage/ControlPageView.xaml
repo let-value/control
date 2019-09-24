@@ -8,13 +8,16 @@
              mc:Ignorable="d"
              x:Class="Mobile.Interface.ControlPage.ControlPageView">
     <ContentPage.ToolbarItems>
-        <ToolbarItem x:Name="GoToSearch" Text="Search" Order="Primary" Priority="0" />
+        <ToolbarItem x:Name="GoToSearch" Icon="search.png"  Order="Primary" Priority="0" />
     </ContentPage.ToolbarItems>
-    <ScrollView>
-        <StackLayout>
-            <Button x:Name="Sleep" Text="Sleep" />
-            <Button x:Name="Shutdown" Text="Shutdown" />
-            <Button x:Name="Reboot" Text="Reboot" />
-        </StackLayout>
-    </ScrollView>
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition/>
+            <RowDefinition/>
+            <RowDefinition/>
+        </Grid.RowDefinitions>
+        <Button Grid.Row="0" x:Name="Sleep" Text="Sleep" />
+        <Button Grid.Row="1" x:Name="Shutdown" Text="Shutdown" />
+        <Button Grid.Row="2" x:Name="Reboot" Text="Reboot" />
+    </Grid>
 </xamForms:ReactiveContentPage>
