@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Hosting.WindowsServices;
 using Microsoft.Extensions.Logging;
 using Target.Models;
 using Target.Networking;
@@ -29,18 +30,21 @@ namespace Target
             (context, config) => config
                 .SetBasePath(Directory.GetCurrentDirectory())
                 .AddJsonFile("settings.json", true, false)
-                .AddJsonFile($"settings.{context.HostingEnvironment.EnvironmentName}.json", true, false)
                 .AddEnvironmentVariables()
                 .AddCommandLine(args);
 
         public void ConfigureServices(IServiceCollection services)
         {
-            services.AddLogging(builder => builder
-                .AddConfiguration(Configuration.GetSection("Logging"))
-                .AddDebug()
-                .AddConsole()
-                .AddEventLog()
-            );
+            services.AddLogging(builder =>
+            {
+                builder
+                    .AddConfiguration(Configuration.GetSection("Logging"))
+                    .AddDebug()
+                    .AddConsole();
+
+                if (WindowsServiceHelpers.IsWindowsService())
+                    builder.AddEventLog();
+            });
 
             services.AddMvcCore()
                 .AddApiExplorer()

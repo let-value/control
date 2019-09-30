@@ -27,7 +27,7 @@ namespace Target.Networking
 
     public class DiscoveryService : IHostedService
     {
-        private ILogger<DiscoveryService> _logger;
+        private readonly ILogger<DiscoveryService> _logger;
 
         SsdpDevicePublisher[] _publishers;
         public static Lazy<SsdpRootDevice> DeviceDefinition;
@@ -44,7 +44,6 @@ namespace Target.Networking
             {
                 var address = NetworkInterface
                     .GetAllNetworkInterfaces()
-                    .OrderByDescending(x => x.Speed)
                     .FirstOrDefault(x =>
                         x.NetworkInterfaceType != NetworkInterfaceType.Loopback &&
                         x.OperationalStatus == OperationalStatus.Up

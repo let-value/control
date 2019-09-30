@@ -9,7 +9,7 @@ jobs:
         - uses: warrenbuckley/Setup-MSBuild@v1
         - uses: actions/setup-dotnet@v1
           with:
-            dotnet-version: '3.0.100-rc1-014190'
+            dotnet-version: '3.0.100'
         - uses: actions/setup-java@v1
           with:
             java-version: '8.0.222'
@@ -29,7 +29,7 @@ jobs:
         - uses: actions/checkout@v1
         - uses: actions/setup-dotnet@v1
           with:
-            dotnet-version: '3.0.100-rc1-014190'
+            dotnet-version: '3.0.100'
         - name: restore
           run: dotnet restore src/Target/Target.csproj
         - name: publish

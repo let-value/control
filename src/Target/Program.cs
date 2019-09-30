@@ -11,9 +11,10 @@ namespace Target
     {
         static async Task Main(string[] args)
         {
-            Directory.SetCurrentDirectory(
-                Path.GetDirectoryName(
-                    Process.GetCurrentProcess().MainModule.FileName));
+            if (WindowsServiceHelpers.IsWindowsService())
+                Directory.SetCurrentDirectory(
+                    Path.GetDirectoryName(Process.GetCurrentProcess().MainModule.FileName)
+                );
             
             var host = new WebHostBuilder()
                 .ConfigureAppConfiguration(Startup.CreateConfiguration(args))
